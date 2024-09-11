@@ -11,5 +11,10 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/IngilizAdam/iot-server.git"
+  },
+  "dependencies": {
+    "express": "^5.0.0",
+    "fs": "^0.0.1-security",
+    "ws": "^8.18.0"
   }
 }
