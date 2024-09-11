@@ -1,9 +1,10 @@
 const express = require('express');
 const WebSocket = require('ws');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const PORT = 8080;
-const API_KEY = fs.readFileSync('./x-api-key.txt', 'utf8').trim();
+const API_KEY = crypto.createHash('sha256').update(fs.readFileSync('./x-api-key.txt', 'utf8').trim()).digest('hex');
 const API_KEY_HEADER = 'x-api-key';
 
 const app = express();
