@@ -72,7 +72,10 @@ wss.on('connection', (ws) => {
                         ws.send(`Subscribed to channels: ${words.slice(1).join(', ')}`);
                     }
                     else if (command === 'unsubscribe') {
-                        
+                        for (let i = 1; i < words.length; i++) {
+                            client.subscriptions.delete(words[i]);
+                            subscriptions[words[i]].delete(client);
+                        }
                     }
                     else if (command === 'publish') {
                         
@@ -96,6 +99,14 @@ wss.on('connection', (ws) => {
 
         // Clear the timer when the connection is closed
         clearTimeout(client.timer);
+
+        // Remove the client from the set of clients
+        clients.delete(client);
+
+        // Remove the client from the subscriptions
+        for (let channel of client.subscriptions) {
+            subscriptions[channel].delete(client);
+        }
     });
 });
 
