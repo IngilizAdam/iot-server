@@ -8,14 +8,14 @@ const Client = require('./lib/client.js');
 const PORT = 8080;
 const API_KEY = fs.readFileSync('./x-api-key.txt', 'utf8').trim();
 const API_KEY_HEADER = 'x-api-key';
-const SAVE_DATA_INTERVAL = 5000; // 5 seconds
+const SAVE_DATA_INTERVAL = 2000;
 
-var data = utils.initData();
+var [data, channels] = utils.initData();
 var subscriptions = utils.initSubscriptions(data);
 var clients = new Set();
 
 setInterval(() => {
-    utils.saveData(data);
+    utils.saveData(data, channels);
 }, SAVE_DATA_INTERVAL);
 
 const app = express();
@@ -143,4 +143,10 @@ app.post('/v1/post', (req, res) => {
     body = req.body;
     console.log(body);
     res.send('Data received');
+});
+
+app.post('/v1/create', (req, res) => {
+    body = req.body;
+    console.log(body);
+    res.send('Data published');
 });
