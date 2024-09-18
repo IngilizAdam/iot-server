@@ -66,19 +66,38 @@ wss.on('connection', (ws) => {
                     const command = words[0];
                     if (command === 'subscribe') {
                         for (let i = 1; i < words.length; i++) {
-                            client.subscriptions.add(words[i]);
+                            client.subscribe(words[i]);
                             subscriptions[words[i]].add(client);
                         }
                         ws.send(`Subscribed to channels: ${words.slice(1).join(', ')}`);
+                        var response = {};
+                        for (let channel of words.slice(1)) {
+                            response[channel] = data[channel];
+                        }
+                        ws.send(JSON.stringify(response));
                     }
                     else if (command === 'unsubscribe') {
                         for (let i = 1; i < words.length; i++) {
-                            client.subscriptions.delete(words[i]);
+                            client.unsubscribe(words[i]);
                             subscriptions[words[i]].delete(client);
                         }
+                        ws.send(`Unsubscribed from channels: ${words.slice(1).join(', ')}`);
                     }
                     else if (command === 'publish') {
-                        
+                        const publishedData = message.toString().substring(command.length + 1);
+                        const dataObj = JSON.parse(publishedData);
+                        var clientsToNotify = new Set();
+                        for (let key in dataObj) {
+                            if (data.hasOwnProperty(key)) {
+                                data[key] = dataObj[key];
+                            }
+                            for (let client of subscriptions[key]) {
+                                clientsToNotify.add(client);
+                            }
+                        }
+                        for (let client of clientsToNotify) {
+                            client.ws.send(JSON.stringify(dataObj));
+                        }
                     }
                     else {
                         ws.send('Invalid command');
@@ -131,22 +150,43 @@ app.use(express.json());
 // Express routes
 app.get('/', (req, res) => {
     res.send('Hello, World!');
-    //print all headers
-    console.log(req.headers);
 });
 
 app.get('/v1/get/data', (req, res) => {
     res.json(data);
 });
 
-app.post('/v1/post', (req, res) => {
+app.post('/v1/post/data', (req, res) => {
     body = req.body;
     console.log(body);
     res.send('Data received');
 });
 
-app.post('/v1/create', (req, res) => {
+app.get('/v1/get/channel', (req, res) => {
+    res.json(channels);
+});
+
+app.post('/v1/post/channel', (req, res) => {
     body = req.body;
     console.log(body);
-    res.send('Data published');
+    for (let i=0; i<body.length; i++) {
+        let item = body[i];
+        console.log(item);
+        let found = false;
+        for (let j=0; j<channels.length; j++) {
+            let channel = channels[j];
+            if (channel["name"] === item["name"]) {
+                channel["type"] = item["type"];
+                channel["default"] = item["default"];
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            channels.push(item);
+        }
+        data[item["name"]] = item["default"];
+
+    }
+    res.send('Channels updated');
 });
