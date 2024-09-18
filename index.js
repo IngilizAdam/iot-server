@@ -159,6 +159,15 @@ app.get('/v1/get/data', (req, res) => {
 app.post('/v1/post/data', (req, res) => {
     body = req.body;
     console.log(body);
+    for (let key in body) {
+        if (data.hasOwnProperty(key)) {
+            data[key] = body[key];
+            for (let client of subscriptions[key]) {
+                // TODO: Send data as one combined message instead of multiple messages
+                client.ws.send(JSON.stringify({ [key]: body[key] }));
+            }
+        }
+    }
     res.send('Data received');
 });
 
