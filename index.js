@@ -2,8 +2,8 @@ const express = require('express');
 const WebSocket = require('ws');
 const fs = require('fs');
 const crypto = require('crypto');
-const utils = require('./lib/utils.js');
-const Client = require('./lib/client.js');
+const utils = require('./src/utils.js');
+const Client = require('./src/client.js');
 
 const PORT = 8080;
 const API_KEY = fs.readFileSync('./x-api-key.txt', 'utf8').trim();
