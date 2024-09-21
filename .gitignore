@@ -1,5 +1,6 @@
 x-api-key.txt
 database/data.json
+database/users.json
 
 # Logs
 logs

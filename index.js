@@ -13,6 +13,7 @@ const SAVE_DATA_INTERVAL = 2000;
 var [data, channels] = utils.initData();
 var subscriptions = utils.initSubscriptions(data);
 var clients = new Set();
+var users = utils.initUsers();
 
 setInterval(() => {
     utils.saveData(data, channels);
@@ -129,22 +130,38 @@ wss.on('connection', (ws) => {
     });
 });
 
-// Middleware for API key authentication
-const authenticateApiKey = (req, res, next) => {
+// Middleware for authentication
+const authenticateUser = (req, res, next) => {
     const apiKey = req.headers[API_KEY_HEADER];
+    const authorization = req.headers['authorization'];
+    console.log("Headers: ", req.headers);
 
-    // Check if the API key is valid
-    if (apiKey === API_KEY) {
+    // Check if the authorization token is present in the headers
+    if (authorization) {
+        const [type, token] = authorization.split(' ');
+        for(let i = 0; i < users.length; i++) {
+            let user = users[i];
+            if (type === 'Basic' && token === user.token) {
+                // User is authenticated, proceed to the next middleware or route handler
+                next();
+                return;
+            }
+        }
+    }
+    // Check if the API key is present in the headers
+    if (apiKey && apiKey === API_KEY) {
         // API key is valid, proceed to the next middleware or route handler
         next();
-    } else {
-        // API key is invalid, send a 401 Unauthorized response
-        res.status(401).json({ error: 'Invalid API key' });
+        return;
+    }
+    else {
+        // API key is missing, send a 401 Unauthorized response
+        res.status(401).set('WWW-Authenticate', 'Basic').send('Invalid or missing authentication credentials');
     }
 };
 
 // Apply the middleware to all routes
-app.use(authenticateApiKey);
+app.use(authenticateUser);
 app.use(express.json());
 
 // Express routes
